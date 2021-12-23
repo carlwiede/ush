@@ -2,11 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/wait.h>
+
+#include "commands.h"
 
 #define USH_RL_BUFSIZE 1024 // That's a lot of characters
 #define USH_TOK_BUFSIZE 64 // No more tokens than this please
 #define USH_TOK_DELIM " \t\r\n\a" // Delimiters
-
 
 int ush_launch(char **args)
 {
@@ -36,7 +38,20 @@ int ush_launch(char **args)
 
 int ush_execute(char **args)
 {
-    
+    int i;
+
+    if (args[0] == NULL) {
+        // Empty command
+        return 1;
+    }
+
+    for (i = 0; i < ush_num_builtins(); i++) {
+        if (strcmp(args[0], builtin_str[i]) == 0) {
+            return (*builtin_func[i])(args);
+        }
+    }
+
+    return ush_launch(args);
 }
 
 // Parsing function very similar to reading function
