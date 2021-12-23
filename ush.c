@@ -1,29 +1,66 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define USH_RL_BUFSIZE 1024 // That's a lot of characters
+#define USH_TOK_BUFSIZE 64 // No more tokens than this please
+#define USH_TOK_DELIM " \t\r\n\a" // Delimiters
 
 int ush_execute(char **args)
 {
     
 }
 
+// Parsing function very similar to reading function
 char **ush_split_line(char *line)
 {
+    int bufsize = USH_TOK_BUFSIZE, position = 0;
+    char **tokens = malloc(bufsize * sizeof(char*));
+    char *token;
 
+    // Sanity check
+    if(!tokens) {
+        fprintf(stderr, "ush: token allocation error\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Get first token
+    token = strtok(line, USH_TOK_DELIM);
+
+    // Iterate for rest of the tokens
+    while (token != NULL) {
+        tokens[position] = token;
+        position++;
+
+        // Dynamic token amount
+        if (position >= bufsize) {
+            bufsize += USH_TOK_BUFSIZE;
+            tokens = realloc(tokens, bufsize * sizeof(char*));
+            // Insanity check
+            if (!tokens) {
+                fprintf(stderr, "ush: token reallocation error\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        // Get next token
+        token = strtok(NULL, USH_TOK_DELIM);
+    }
+    // Null-terminate
+    tokens[position] = NULL;
+    return tokens;
 }
 
 // Old school line reading because who needs getline()
 char *ush_read_line(void)
 {
-    int bufsize = USH_RL_BUFSIZE;
-    int position = 0;
+    int bufsize = USH_RL_BUFSIZE, position = 0;
     char *buffer = malloc(sizeof(char) * bufsize);
     int c;
 
     // Hold the phone
     if (!buffer) {
-        fprintf(stderr, "ush: allocation error\n");
+        fprintf(stderr, "ush: line allocation error\n");
         exit(EXIT_FAILURE);
     }
 
@@ -47,7 +84,7 @@ char *ush_read_line(void)
 
             // Hold the phone again
             if (!buffer) {
-                fprintf(stderr, "ush: reallocation error \n");
+                fprintf(stderr, "ush: line reallocation error \n");
                 exit(EXIT_FAILURE);
             }
         }
